@@ -105,7 +105,7 @@ def _expand_mask(mask: torch.Tensor, dtype: torch.dtype, tgt_len: Optional[int] 
 
     return inverted_mask.masked_fill(inverted_mask.to(torch.bool), torch.finfo(dtype).min)
 
-
+# NOTE 因果大模型输出！！！
 @dataclass
 class CausalLMOutputWithPastWithModel(CausalLMOutputWithPast):
     """
@@ -890,7 +890,7 @@ class LlamaModel(LlamaPreTrainedModel):
             loca=loca,
         ), labels, new_inputs_attention_mask, return_special_toks_loc
 
-
+# NOTE 因果大模型！！！
 class LlamaForCausalLM(LlamaPreTrainedModel):
     _tied_weights_keys = ["lm_head.weight"]
     _keep_in_fp32_modules = ['map_adapter',
@@ -913,6 +913,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
 
     def __init__(self, config):
         super().__init__(config)
+        # NOTE 对应论文图2中的LLM模块
         self.model = LlamaModel(config)
         self.config = config
         self.vocab_size = config.vocab_size
@@ -960,6 +961,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         self.llm_inf_step = config.llm_inf_step
 
         if self.adapter_fusion:
+            # NOTE 适配器融合
             self.gameformer =  LLMEnhancedGameFormer_Adapter(encoder_layers=3, decoder_levels=2, modalities=6, neighbors=10) # this
         else:
             self.gameformer =  LLMEnhancedGameFormer(encoder_layers=3, decoder_levels=2, modalities=6, neighbors=10)
@@ -1111,6 +1113,10 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
     def get_decoder(self):
         return self.model
 
+    # NOTE 装饰器
+    # @add_start_docstrings_to_model_forward：自动插入预定义的输入参数文档（如LLAMA_INPUTS_DOCSTRING），标准化接口描述。
+    # @replace_return_docstrings：动态替换返回值的文档说明，确保输出类型（如CausalLMOutputWithPastWithModel）的描述与模型实际行为一致。
+    # NOTE 通过装饰器实现模型接口的标准化，使不同架构（如Llama、Qwen、GPT）的forward方法保持相似的调用方式和文档结构，降低用户学习成本
     @add_start_docstrings_to_model_forward(LLAMA_INPUTS_DOCSTRING)
     @replace_return_docstrings(output_type=CausalLMOutputWithPastWithModel, config_class=_CONFIG_FOR_DOC)
     def forward(
@@ -1201,6 +1207,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             map_feats, map_masks = encoder_outputs['encoding'], encoder_outputs['mask']
             if torch.isnan(map_feats).any():
                 import pdb; pdb.set_trace()
+            # NOTE 论文中的map_adapter模块
             map_feats = self.map_adapter(map_feats)
             map_feats = map_feats.to(self.map_adapter.weight.dtype)
         else:
@@ -1224,7 +1231,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         ego_plan = None
         level_k_outputs = None
         hidden_states = outputs[0]
-
+        # 异步推理的调用逻辑
         if cur_iter.index % self.llm_inf_step != 0:
             hidden_states = self.prev_hidden_states
         else:
@@ -1232,6 +1239,7 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
         
         # use query feature instead of direct hidden_states
         ########
+        # TAG 对应论文中的feature_adpter模块
         if self.use_all_tokens:
             pooling_features = hidden_states.mean(dim=1)
             hidden_states = pooling_features
@@ -1240,7 +1248,8 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             hidden_states = hidden_states[:, -1, :]
             predicted_feature = self.feature_adpter(hidden_states)
             
-        # loss for llm hidden feature
+        # NOTE loss for llm hidden feature
+        # TAG 对应论文中的Alignment Assitance Module模块
         predicted_waypoints = self.waypoints_predictor(hidden_states)
         predicted_waypoints = predicted_waypoints.reshape(predicted_waypoints.shape[0], self.feature_len, 2)
         if not inference:
@@ -1294,6 +1303,8 @@ class LlamaForCausalLM(LlamaPreTrainedModel):
             llm_feature = predicted_feature
 
         input_t = (raw_map_vector, llm_feature)
+        # NOTE llm_feature
+        # NOTE gameformer的输出
         level_k_outputs, ego_plan = self.gameformer(input_t)
         
         if not inference:

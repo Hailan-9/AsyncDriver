@@ -130,6 +130,7 @@ class GameFormer(nn.Module):
 
         return decoder_outputs, ego_plan
 
+# NOTE 大模型提升GameFormerPLanner 适配器
 class LLMEnhancedGameFormer_Adapter(nn.Module):
     def __init__(self, encoder_layers=6, decoder_levels=3, modalities=6, neighbors=10, share_encoder=None):
         super(LLMEnhancedGameFormer_Adapter, self).__init__()

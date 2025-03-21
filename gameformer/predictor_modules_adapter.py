@@ -147,7 +147,7 @@ class CrossTransformer(nn.Module):
         output = self.norm_2(self.ffn(attention_output) + attention_output)
 
         return output
-    
+# NOTE 论文中的自适应块！！！
 class AdaptiveBlock(nn.Module):
     def __init__(self, heads=8, dim=256):
         super().__init__()
@@ -220,7 +220,8 @@ class InitialPredictionDecoder(nn.Module):
 
         return query_content, predictions, scores
 
-
+# 作者新加的一个模块py文件
+# NOTE 重构的InteractionDecoder模块 加入了llm_feature!!!
 class InteractionDecoder(nn.Module):
     def __init__(self, modalities, future_encoder):
         super(InteractionDecoder, self).__init__()

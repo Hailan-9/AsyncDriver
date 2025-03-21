@@ -86,7 +86,7 @@ def build_simulations(
         if pre_built_planners is None:
             if 'planner' not in cfg.keys():
                 raise KeyError('Planner not specified in config. Please specify a planner using "planner" field.')
-
+            # NOTE 构建规划器
             planners = build_planners(cfg.planner, scenario)
         else:
             planners = pre_built_planners
@@ -128,6 +128,7 @@ def build_simulations(
                 callback=MultiCallback(callbacks + stateful_callbacks),
                 simulation_history_buffer_duration=cfg.simulation_history_buffer_duration,
             )
+            # NOTE 运行仿真
             simulations.append(SimulationRunner(simulation, planner))
 
     logger.info('Building simulations...DONE!')

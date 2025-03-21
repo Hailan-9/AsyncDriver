@@ -46,7 +46,7 @@ def parse_args():
 
 args = parse_args()
 
-
+# 配置文件的路径 hydra
 # Location of path with all simulation configs
 CONFIG_PATH = '../../nuplan/planning/script/config/simulation'
 CONFIG_NAME = 'default_simulation'

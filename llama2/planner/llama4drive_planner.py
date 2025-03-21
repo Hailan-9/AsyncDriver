@@ -175,13 +175,15 @@ def route_roadblock_correction(
     )
 
     return route_roadblock_ids
-
+# NOTE 规划器！！！
+# BaseGFPlanner:基础的GameFormer planner
+# NOTE 继承和依赖于基础的实时规划器
 class LLAMA4DrivePlanner(BaseGFPlanner):
     requires_scenario = True
 
     def __init__(self,
                  scenario: AbstractScenario, 
-                 sub_planner: AbstractPlanner = None,
+                 sub_planner: AbstractPlanner = None, # 子规划器，pdm score 
                  enable_pdm_scorer_in_multirefpath=False,
                  disable_refpath=False, 
                  ins_mode=None,
@@ -220,6 +222,7 @@ class LLAMA4DrivePlanner(BaseGFPlanner):
         self._model_cfg = model_cfg
         self.scenario = scenario
         self.sub_planner = sub_planner
+        # NOTE PDM score 应该是一个基于规则的轨迹打分模块 
         self.enable_pdm_scorer_in_multirefpath = enable_pdm_scorer_in_multirefpath
 
         if enable_pdm_scorer_in_multirefpath:
@@ -248,10 +251,12 @@ class LLAMA4DrivePlanner(BaseGFPlanner):
             self._path_planner = LatticePlanner(self._candidate_lane_edge_ids, self._max_path_length, return_all_refpath=True)
 
     def _initialize_model(self):
+        # NOTE 大语言驾驶模型！！！
         self._model = LLAMA2DriveModel(self._model_cfg)
-
+    # NOTE 和GameFormer代码类似
     def _get_prediction(self, features, ref_path, cur_iter):
         # predictions, plan = self._model(features)
+        # NOTE 大语言模型和实时规划器产生的输出！！！
         output = self._model.inference(features, ref_path, cur_iter)
         predictions = output.predictions
         if self.llm_plan:
@@ -460,7 +465,7 @@ class LLAMA4DrivePlanner(BaseGFPlanner):
             )
             # print(route_roadblock_ids)
             self._initialize_route_plan(route_roadblock_ids)
-
+    # NOTE 和GameFormer的代码类似
     def compute_planner_trajectory(self, current_input: PlannerInput):
         s = time.time()
         iteration = current_input.iteration.index

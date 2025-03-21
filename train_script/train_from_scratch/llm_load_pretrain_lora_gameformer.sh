@@ -1,4 +1,4 @@
-
+# 代码注释：点击链接查看和 Kimi 的对话 https://kimi.moonshot.cn/share/cvecshra9jtm82a3g05g
 root_dir=./llama2
 task_name=$(basename "$0" .sh)
 PYTHONPATH=.

@@ -72,6 +72,7 @@ agent_type_name = {
 
 
 class PDMScorer4LLM:
+    # NOTE 对轨迹提案的打分
     """Class to score proposals in PDM pipeline. Re-implements nuPlan's closed-loop metrics."""
 
     def __init__(self, proposal_sampling: TrajectorySampling):

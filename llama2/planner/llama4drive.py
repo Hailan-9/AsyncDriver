@@ -44,6 +44,9 @@ def get_model(model_name_or_path=None,
               **kwargs):
     if len(os.listdir(finetune_model_path))==1:
             finetune_model_path = os.path.join(finetune_model_path, os.listdir(finetune_model_path)[0])
+    # NOTE 加载预训练的大语言模型及其分词器
+    # NOTE 分词器
+    # https://yuanbao.tencent.com/bot/app/share/chat/C6COS0FQsqwu
     tokenizer = AutoTokenizer.from_pretrained(finetune_model_path, use_fast=False)
 
     tokenizer.pad_token_id = 0
@@ -55,6 +58,7 @@ def get_model(model_name_or_path=None,
         "revision": 'main',
         "use_auth_token": None,
     }
+    # NOTE 通过 Hugging Face Transformers 库的 AutoConfig 类，​动态加载预训练模型的配置信息，并允许用户通过关键字参数 **config_kwargs 灵活修改配置。
     config = AutoConfig.from_pretrained(model_name_or_path, **config_kwargs)
     config.feature_len = kwargs.get('feature_len', 80)
     config.map_former = kwargs.get('map_former', False)
@@ -82,6 +86,8 @@ def get_model(model_name_or_path=None,
         bnb_4bit_quant_type="nf4",
         bnb_4bit_compute_dtype=torch.bfloat16
     )
+    # LLAMA 因果大模型
+    # https://yuanbao.tencent.com/bot/app/share/chat/qHlH6EE6Ujqc
     model = LlamaForCausalLM.from_pretrained(
         model_name_or_path,
         config=config,
@@ -107,6 +113,7 @@ def get_model(model_name_or_path=None,
         print('\n\n================== Lora Cfg =================')
         print(lora_config)
         print('\n\n')
+        # 将原始模型与LoRA（低秩适配）微调技术结合，创建一个支持高效微调的新模型实例。
         model = ModelWithLoRA(model, lora_config)
     else:
         lora_config = None
@@ -144,6 +151,7 @@ def padding_token(input_ids_list, padding_id, padding_side='left'):
             raise ValueError('padding_side must be left or right!')
     return torch.tensor(input_ids_list)
 
+# NOTE LLAMA2模型 大语言模型！！!
 class LLAMA2DriveModel:
     _instance = None
     _lock = threading.Lock()
@@ -171,7 +179,7 @@ class LLAMA2DriveModel:
         )
         cls.model_loaded = True
         cls.diversity = config.get('diversity_ins', False)
-
+    # NOTE 产生提示
     def generate_prompt(self, lane, return_navi=False):
         if isinstance(lane, torch.Tensor):
             lane = lane.cpu().numpy()
@@ -210,7 +218,7 @@ class LLAMA2DriveModel:
         if return_navi:
             return messages, cmd
         return messages
-
+    # NOTE 获得指令
     def get_instruction(self, ego_future_poses, threshold=0.5, return_prompt=True, limit=99999999, diversity=False):
         # dis_norm = np.linalg.norm(np.diff(np.concatenate([ego_future_poses[:1,:-1], ego_future_poses[:,:-1]], axis=0), n=1, axis=0), axis=1)
         ego_future_poses = ego_future_poses[:, :3]
@@ -284,11 +292,12 @@ class LLAMA2DriveModel:
                 
         # print('whole route is %s meters.'%str(dis_cum[-1]))
         return [cmd_ls, dis_ls], instruction
-
+    # 模型推理！！！
     def inference(self, data, ref_path, cur_iter):
         if not hasattr(self, 'model_loaded') or not self.model_loaded:
             raise RuntimeError("Model not loaded properly.")
         tokenizer = self.tokenizer
+        # NOTE 大模型产生的提示信息！！！
         messages = self.generate_prompt(ref_path)
         messages = messages.replace('<map>', '<map></map>')
         map_info = data

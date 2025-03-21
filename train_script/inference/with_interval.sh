@@ -1,3 +1,4 @@
+# 这行代码设置了一个环境变量 CUDA_VISIBLE_DEVICES，其值来自脚本的第一个参数（$1）
 CUDA_VISIBLE_DEVICES=$1 python train_script/inference/simulator_llama4drive.py \
 --planner path/to/ckpt \
 --base_model path/to/llama-2-13b-chat-hf \
