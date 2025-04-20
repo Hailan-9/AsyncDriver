@@ -243,7 +243,11 @@ class PDMHybridPlanner(AbstractPDMClosedPlanner):
         )
         self._iteration += 1
         return trajectory
-    
+
+    # NOTE 在tuplan_garage的基础上加了新内容！！！
+    # NOTE 在tuplan_garage的基础上加了新内容！！！
+    # NOTE 在tuplan_garage的基础上加了新内容！！！
+
     def get_instruction(self, ego_future_poses, ege_future_states, threshold=0.5, return_prompt=False):
         dis_norm = np.linalg.norm(np.diff(np.concatenate([ego_future_poses[:1,:-1], ego_future_poses[:,:-1]], axis=0), n=1, axis=0), axis=1)
         dis_cum = np.cumsum(dis_norm, axis=0)

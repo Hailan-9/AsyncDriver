@@ -413,10 +413,13 @@ class LLAMA4DrivePlanner(BaseGFPlanner):
                 max_traj = None
                 corr_cost = -1
                 for ref_path, cost in ref_path_set:
+                    # NOTE 即基于Theseus库的非线性轨迹优化算法！！！
                     plan_r = self._trajectory_planner.plan(ego_state, ego_state_transformed, neighbors_state_transformed,
                                                         predictions, plan, pred_scores, ref_path, observation)
                     states = transform_predictions_to_states(plan_r, history.ego_states, self._future_horizon, 0.1)
                     trajectory = InterpolatedTrajectory(states)
+                    # NOTE 使用tuplan_garage中的PDM-score对每个轨迹进行打分！
+                    # NOTE tuplan_garage真是促进了端到端自动驾驶规划算法的进步！！！
                     _, scores = self.sub_planner.compute_planner_trajectory_just_4_get_score(self.current_input, trajectory)
                     curr_score = np.mean(scores)
                     # plans.append((trajectory, cost, curr_score))
